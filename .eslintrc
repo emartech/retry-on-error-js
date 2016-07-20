@@ -1,0 +1,24 @@
+{
+  "root": true,
+  "extends": [
+    "emarsys"
+  ],
+  "env": {
+    "es6": true,
+    "node": true,
+    "mocha": true
+  },
+  "globals": {
+    "inject": true,
+    "onmessage": true,
+    "expect": true
+  },
+  "rules": {
+    "no-unused-expressions": 0,
+    "no-unused-vars": [2, { "vars": "all", "args": "after-used" }],
+    "curly": [2, "multi-line"],
+    "require-yield": 0,
+    "new-cap": 0,
+    "security/detect-object-injection": 0
+  }
+}
