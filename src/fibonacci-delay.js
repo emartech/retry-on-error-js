@@ -9,8 +9,9 @@ class FibonacciDelay {
   }
 
   delay(attempts) {
-    const delayInMilliSeconds = this._delayInSeconds[attempts - 1] * 1000;
-    return Delay.wait(delayInMilliSeconds, delayInMilliSeconds);
+    const delayInSeconds = this._delayInSeconds[attempts - 1];
+    const delayInMilliSeconds = delayInSeconds * 1000;
+    return Delay.wait(delayInMilliSeconds, delayInSeconds);
   }
 
   get maxTries() {
