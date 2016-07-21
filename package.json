@@ -1,7 +1,7 @@
 {
   "name": "@emartech/retry-on-error",
   "description": "",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test mocha --harmony --require co-mocha $(find . -name \"*.spec.js\" -not -path \"./node_modules/*\")",
     "code-style": "eslint $(find . -name \"*.js\" -not -path \"./node_modules/*\")",
@@ -28,7 +28,7 @@
   ],
   "homepage": "https://github.com/emartech/retry-on-error-js",
   "dependencies": {
-    "@emartech/delay-js": "0.1.4",
+    "@emartech/delay-js": "0.2.0",
     "logentries-logformat": "0.1.4"
   },
   "devDependencies": {

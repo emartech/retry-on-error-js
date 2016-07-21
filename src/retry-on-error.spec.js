@@ -1,12 +1,14 @@
 'use strict';
 
-const RetryOnError = require('./');
 const Delay = require('@emartech/delay-js');
+
+const RetryOnError = require('./retry-on-error');
+
 
 describe('Retry On Error', () => {
   let fn;
 
-  const getSubject = () => new RetryOnError(fn, 5);
+  const getSubject = () => RetryOnError.create(fn, 5);
 
   beforeEach(function() {
     fn = this.sandbox.stub();
@@ -48,7 +50,7 @@ describe('Retry On Error', () => {
     });
 
     it('should throw error after 10 retries', function*() {
-      let subject = () => new RetryOnError(fn, 10);
+      let subject = () => RetryOnError.create(fn, 10);
       fn.rejects(new Error('some error'));
 
       try {
@@ -76,6 +78,25 @@ describe('Retry On Error', () => {
       expect(Delay.wait).to.have.been.calledWith(2000);
       expect(Delay.wait).to.have.been.calledWith(3000);
       expect(Delay.wait).to.have.been.calledWith(5000);
+    });
+
+    it('should call thrice using an injected strategy', function*() {
+      const strategy = {
+        delay: this.sandbox.stub().resolves(),
+        get maxTries() {
+          return 3;
+        }
+      };
+      const subject = RetryOnError.createWithStrategy(fn, strategy);
+
+      fn.onFirstCall().rejects(new Error());
+      fn.onSecondCall().rejects(new Error());
+      fn.onThirdCall().resolves();
+
+      yield subject.run();
+
+      expect(fn).to.have.been.calledThrice;
+      expect(strategy.delay).to.have.been.calledTwice;
     });
   });
 });

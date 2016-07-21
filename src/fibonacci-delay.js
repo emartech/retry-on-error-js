@@ -2,7 +2,7 @@
 
 const Delay = require('@emartech/delay-js');
 
-class RetryDelay {
+class FibonacciDelay {
 
   constructor(tries) {
     [...this._delayInSeconds] = this._fibonacci(tries - 1);
@@ -28,4 +28,4 @@ class RetryDelay {
   }
 }
 
-module.exports = RetryDelay;
+module.exports = FibonacciDelay;

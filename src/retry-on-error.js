@@ -2,24 +2,29 @@
 
 const logger = require('logentries-logformat')('report-retry');
 
-const Delay = require('@emartech/delay-js');
 const config = require('../config');
+const FibonacciDelay = require('./fibonacci-delay');
 
 class RetryOnError {
 
-  static create(generatorFunction, tries) {
-    return new RetryOnError(generatorFunction, tries || config.maxTries);
+  static create(generatorFunction, maxTries) {
+    return RetryOnError.createWithStrategy(generatorFunction, new FibonacciDelay(maxTries || config.maxTries));
   }
 
-  constructor(generatorFunction, tries) {
+  static createWithStrategy(generatorFunction, delayStrategy) {
+    return new RetryOnError(generatorFunction, delayStrategy);
+  }
+
+  constructor(generatorFunction, delayStrategy) {
+    this._delayStrategy = delayStrategy;
     this.generatorFunction = generatorFunction;
     this.run = this.run.bind(this);
-    [...this.delayInSeconds] = this.fibonacci(tries - 1);
   }
 
   *run() {
     let attempts = 0;
     let wasSuccessful;
+    let lastDelayTime = 0;
     do {
       wasSuccessful = true;
       attempts++;
@@ -27,42 +32,26 @@ class RetryOnError {
         return yield this.generatorFunction();
       } catch (e) {
         wasSuccessful = false;
-        if (attempts > this.delayInSeconds.length) {
+        if (attempts > this._delayStrategy.maxTries) {
           throw e;
         }
 
-        this._logError(e, attempts);
-        yield this.delay(attempts);
+        this._logError(e, attempts, lastDelayTime);
+        lastDelayTime = yield this._delayStrategy.delay(attempts);
       }
     } while (!wasSuccessful);
   }
 
-  delay(attempts) {
-    const delayInMilliSeconds = this.delayInSeconds[attempts - 1] * 1000;
-
-    return Delay.wait(delayInMilliSeconds);
-  }
-
-  _logError(e, attempts) {
+  _logError(e, attempts, lastDelayTime) {
     logger.log('retry', Object.assign({},
       {
         attempt: attempts,
-        delay: this.delayInSeconds[attempts - 1],
+        delay: lastDelayTime,
         errorMessage: e.message,
         errorStack: e.stack
       },
       e
     ));
-  }
-
-  *fibonacci(n) {
-    let current = 1;
-    let next = 2;
-
-    while (n--) {
-      yield current;
-      [current, next] = [next, current + next];
-    }
   }
 }
 
