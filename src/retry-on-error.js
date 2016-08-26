@@ -1,6 +1,6 @@
 'use strict';
 
-const logger = require('logentries-logformat')('report-retry');
+const logger = require('logentries-logformat')('retry-on-error');
 
 const config = require('../config');
 const FibonacciDelay = require('./fibonacci-delay');
