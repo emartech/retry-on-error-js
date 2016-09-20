@@ -46,9 +46,7 @@ class RetryOnError {
     logger.log('retry', Object.assign({},
       {
         attempt: attempts,
-        delay: lastDelayTime,
-        errorMessage: e.message,
-        errorStack: e.stack
+        delay: lastDelayTime
       },
       e
     ));
