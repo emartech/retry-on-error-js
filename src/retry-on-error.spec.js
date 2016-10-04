@@ -80,14 +80,14 @@ describe('Retry On Error', () => {
       expect(Delay.wait).to.have.been.calledWith(5000);
     });
 
-    it('should call thrice using an injected strategy', function*() {
-      const strategy = {
+    it('should call thrice using an injected delay strategy', function*() {
+      const delayStrategy = {
         delay: this.sandbox.stub().resolves(),
         get maxTries() {
           return 3;
         }
       };
-      const subject = RetryOnError.createWithStrategy(fn, strategy);
+      const subject = RetryOnError.createWithStrategy(fn, delayStrategy);
 
       fn.onFirstCall().rejects(new Error());
       fn.onSecondCall().rejects(new Error());
@@ -96,7 +96,35 @@ describe('Retry On Error', () => {
       yield subject.run();
 
       expect(fn).to.have.been.calledThrice;
-      expect(strategy.delay).to.have.been.calledTwice;
+      expect(delayStrategy.delay).to.have.been.calledTwice;
+    });
+
+    it('should use the injected error handler strategy', function*() {
+      const delayStrategy = {
+        delay: this.sandbox.stub().resolves(),
+        get maxTries() {
+          return 10;
+        }
+      };
+      const errorHandlerStrategy = {
+        canCatch: this.sandbox.stub().returns(false)
+      };
+      const testError = new Error();
+      const subject = RetryOnError.createWithStrategy(fn, delayStrategy, errorHandlerStrategy);
+
+      fn.rejects(testError);
+
+      try {
+        yield subject.run();
+      } catch (e) {
+        expect(e).to.eq(testError);
+        expect(fn).to.have.been.calledOnce;
+        expect(delayStrategy.delay).not.to.have.been.called;
+        expect(errorHandlerStrategy.canCatch).to.have.been.calledOnce;
+        return;
+      }
+
+      throw new Error('Error expected');
     });
   });
 });

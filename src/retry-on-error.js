@@ -3,20 +3,30 @@
 const logger = require('logentries-logformat')('retry-on-error');
 
 const config = require('../config');
-const FibonacciDelay = require('./fibonacci-delay');
+const FibonacciDelay = require('./strategies/delay/fibonacci-delay');
+const CatchAllErrorHandler = require('./strategies/errorhandler/catch-all');
 
 class RetryOnError {
 
   static create(generatorFunction, maxTries) {
-    return RetryOnError.createWithStrategy(generatorFunction, new FibonacciDelay(maxTries || config.maxTries));
+    return RetryOnError.createWithStrategy(
+      generatorFunction,
+      new FibonacciDelay(maxTries || config.maxTries),
+      new CatchAllErrorHandler()
+    );
   }
 
-  static createWithStrategy(generatorFunction, delayStrategy) {
-    return new RetryOnError(generatorFunction, delayStrategy);
+  static createWithStrategy(generatorFunction, delayStrategy, errorHandlerStrategy) {
+    return new RetryOnError(
+      generatorFunction,
+      delayStrategy,
+      errorHandlerStrategy || new CatchAllErrorHandler()
+    );
   }
 
-  constructor(generatorFunction, delayStrategy) {
+  constructor(generatorFunction, delayStrategy, errorHandlerStrategy) {
     this._delayStrategy = delayStrategy;
+    this._errorHandlerStrategy = errorHandlerStrategy;
     this.generatorFunction = generatorFunction;
     this.run = this.run.bind(this);
   }
@@ -31,6 +41,10 @@ class RetryOnError {
       try {
         return yield this.generatorFunction();
       } catch (e) {
+        if (!this._errorHandlerStrategy.canCatch(e)) {
+          throw e;
+        }
+
         wasSuccessful = false;
         if (attempts > this._delayStrategy.maxTries) {
           throw e;
