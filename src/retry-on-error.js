@@ -11,15 +11,17 @@ class RetryOnError {
   static create(generatorFunction, maxTries) {
     return RetryOnError.createWithStrategy(
       generatorFunction,
-      new FibonacciDelay(maxTries || config.maxTries),
-      new CatchAllErrorHandler()
+      {
+        delayStrategy: new FibonacciDelay(maxTries || config.maxTries),
+        errorHandlerStrategy: new CatchAllErrorHandler()
+      }
     );
   }
 
-  static createWithStrategy(generatorFunction, delayStrategy, errorHandlerStrategy) {
+  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy }) {
     return new RetryOnError(
       generatorFunction,
-      delayStrategy,
+      delayStrategy || new FibonacciDelay(config.maxTries),
       errorHandlerStrategy || new CatchAllErrorHandler()
     );
   }

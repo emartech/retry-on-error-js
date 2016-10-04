@@ -87,7 +87,7 @@ describe('Retry On Error', () => {
           return 3;
         }
       };
-      const subject = RetryOnError.createWithStrategy(fn, delayStrategy);
+      const subject = RetryOnError.createWithStrategy(fn, { delayStrategy });
 
       fn.onFirstCall().rejects(new Error());
       fn.onSecondCall().rejects(new Error());
@@ -110,7 +110,7 @@ describe('Retry On Error', () => {
         canCatch: this.sandbox.stub().returns(false)
       };
       const testError = new Error();
-      const subject = RetryOnError.createWithStrategy(fn, delayStrategy, errorHandlerStrategy);
+      const subject = RetryOnError.createWithStrategy(fn, { delayStrategy, errorHandlerStrategy });
 
       fn.rejects(testError);
 
