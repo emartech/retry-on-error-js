@@ -3,7 +3,7 @@
 const config = require('../config');
 const FibonacciDelay = require('./strategies/delay/fibonacci-delay');
 const CatchAllErrorHandler = require('./strategies/errorhandler/catch-all');
-const DefaultLogger = require('./log/default-logger');
+const DefaultLogger = require('./strategies/log/default-logger');
 
 class RetryOnError {
 
@@ -18,19 +18,19 @@ class RetryOnError {
     );
   }
 
-  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy, logFunction }) {
+  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy, logStrategy }) {
     return new RetryOnError(
       generatorFunction,
       delayStrategy || new FibonacciDelay(config.maxTries),
       errorHandlerStrategy || new CatchAllErrorHandler(),
-      logFunction || DefaultLogger.logError
+      logStrategy || DefaultLogger.logError
     );
   }
 
-  constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logFunction) {
+  constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logStrategy) {
     this._delayStrategy = delayStrategy;
     this._errorHandlerStrategy = errorHandlerStrategy;
-    this._logFunction = logFunction;
+    this._logFunction = logStrategy;
     this.generatorFunction = generatorFunction;
     this.run = this.run.bind(this);
   }

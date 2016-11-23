@@ -4,7 +4,7 @@ const Delay = require('@emartech/delay-js');
 
 const RetryOnError = require('./retry-on-error');
 const ExponentialDelay = require('./strategies/delay/exponential-delay');
-const DefaultLogger = require('./log/default-logger');
+const DefaultLogger = require('./strategies/log/default-logger');
 
 describe('Retry On Error', () => {
   let fn;
