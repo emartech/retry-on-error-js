@@ -28,7 +28,7 @@ class RetryOnError {
     );
   }
 
-  static *runExponential(generatorFunction, { maxTries = 5, exponentialBase = 2, multiplier = 5, logStrategy }) {
+  static *runExponential(generatorFunction, { maxTries = 5, exponentialBase = 2, multiplier = 5, logStrategy = DefaultLogger.logError}) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
       errorHandlerStrategy: new CatchAllErrorHandler(),
@@ -41,7 +41,7 @@ class RetryOnError {
   constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logStrategy) {
     this._delayStrategy = delayStrategy;
     this._errorHandlerStrategy = errorHandlerStrategy;
-    this._logFunction = logStrategy;
+    this._logStrategy = logStrategy;
     this.generatorFunction = generatorFunction;
     this.run = this.run.bind(this);
   }
@@ -56,7 +56,7 @@ class RetryOnError {
       try {
         return yield this.generatorFunction();
       } catch (e) {
-        this._logFunction(e, { attempts, lastDelayTime });
+        this._logStrategy(e, { attempts, lastDelayTime });
 
         if (!this._errorHandlerStrategy.canCatch(e)) {
           throw e;

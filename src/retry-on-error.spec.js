@@ -148,4 +148,41 @@ describe('Retry On Error', () => {
       }
     });
   });
+
+  describe('#runExponential', () => {
+    it('should call successful function once', function*() {
+      fn.resolves();
+
+      yield RetryOnError.runExponential(fn, {});
+
+      expect(fn).to.have.been.calledOnce;
+    });
+
+    it('should call rejected function thrice', function*() {
+      const testError = new Error();
+      const config = {
+        maxTries: 3
+      };
+      fn.onFirstCall().rejects(testError);
+      fn.onSecondCall().rejects(testError);
+      fn.onThirdCall().resolves();
+
+      yield RetryOnError.runExponential(fn, config);
+
+      expect(fn).to.have.been.calledThrice;
+    });
+
+    it('returns appropriate value', function*() {
+      const config = {
+        maxTries: 2
+      };
+      fn.onFirstCall().rejects(new Error());
+      fn.onSecondCall().resolves(2)
+
+      let result = yield RetryOnError.runExponential(fn, config);
+
+      expect(fn).to.have.been.calledTwice;
+      expect(result).to.eq(2);
+    });
+  })
 });
