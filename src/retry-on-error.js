@@ -1,10 +1,9 @@
 'use strict';
 
-const logger = require('logentries-logformat')('retry-on-error');
-
 const config = require('../config');
 const FibonacciDelay = require('./strategies/delay/fibonacci-delay');
 const CatchAllErrorHandler = require('./strategies/errorhandler/catch-all');
+const DefaultLogger = require('./log/default-logger');
 
 class RetryOnError {
 
@@ -13,22 +12,25 @@ class RetryOnError {
       generatorFunction,
       {
         delayStrategy: new FibonacciDelay(maxTries || config.maxTries),
-        errorHandlerStrategy: new CatchAllErrorHandler()
+        errorHandlerStrategy: new CatchAllErrorHandler(),
+        logFunction: DefaultLogger.logError
       }
     );
   }
 
-  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy }) {
+  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy, logFunction }) {
     return new RetryOnError(
       generatorFunction,
       delayStrategy || new FibonacciDelay(config.maxTries),
-      errorHandlerStrategy || new CatchAllErrorHandler()
+      errorHandlerStrategy || new CatchAllErrorHandler(),
+      logFunction || DefaultLogger.logError
     );
   }
 
-  constructor(generatorFunction, delayStrategy, errorHandlerStrategy) {
+  constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logFunction) {
     this._delayStrategy = delayStrategy;
     this._errorHandlerStrategy = errorHandlerStrategy;
+    this._logFunction = logFunction;
     this.generatorFunction = generatorFunction;
     this.run = this.run.bind(this);
   }
@@ -43,6 +45,8 @@ class RetryOnError {
       try {
         return yield this.generatorFunction();
       } catch (e) {
+        this._logFunction(e, { attempts, lastDelayTime });
+
         if (!this._errorHandlerStrategy.canCatch(e)) {
           throw e;
         }
@@ -52,20 +56,9 @@ class RetryOnError {
           throw e;
         }
 
-        this._logError(e, attempts, lastDelayTime);
         lastDelayTime = yield this._delayStrategy.delay(attempts);
       }
     } while (!wasSuccessful);
-  }
-
-  _logError(e, attempts, lastDelayTime) {
-    logger.log('retry', Object.assign({},
-      {
-        attempt: attempts,
-        delay: lastDelayTime
-      },
-      e
-    ));
   }
 }
 

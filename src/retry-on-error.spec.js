@@ -3,7 +3,8 @@
 const Delay = require('@emartech/delay-js');
 
 const RetryOnError = require('./retry-on-error');
-
+const ExponentialDelay = require('./strategies/delay/exponential-delay');
+const DefaultLogger = require('./log/default-logger');
 
 describe('Retry On Error', () => {
   let fn;
@@ -16,7 +17,7 @@ describe('Retry On Error', () => {
     this.disableDelay();
   });
 
-  describe('run', () => {
+  describe('#run', () => {
     it('should call once', function*() {
       fn.resolves();
 
@@ -125,6 +126,26 @@ describe('Retry On Error', () => {
       }
 
       throw new Error('Error expected');
+    });
+
+    it('should log failed attempt', function*() {
+      this.sandbox.stub(DefaultLogger, 'logError');
+
+      const testError = new Error('always fail');
+      const subject = RetryOnError.createWithStrategy(
+        function*() { throw testError; },
+        { delayStrategy: new ExponentialDelay(2) }
+      );
+
+      try {
+        yield subject.run();
+      } catch (e) {
+        expect(DefaultLogger.logError).to.have.been.calledTwice;
+        expect(DefaultLogger.logError).to.have.been.calledWith(testError, {
+          attempts: 1,
+          lastDelayTime: 0
+        });
+      }
     });
   });
 });
