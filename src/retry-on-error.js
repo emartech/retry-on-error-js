@@ -2,6 +2,7 @@
 
 const config = require('../config');
 const FibonacciDelay = require('./strategies/delay/fibonacci-delay');
+const ExponentialDelay = require('./strategies/delay/exponential-delay');
 const CatchAllErrorHandler = require('./strategies/errorhandler/catch-all');
 const DefaultLogger = require('./strategies/log/default-logger');
 
@@ -13,7 +14,7 @@ class RetryOnError {
       {
         delayStrategy: new FibonacciDelay(maxTries || config.maxTries),
         errorHandlerStrategy: new CatchAllErrorHandler(),
-        logFunction: DefaultLogger.logError
+        logStrategy: DefaultLogger.logError
       }
     );
   }
@@ -25,6 +26,16 @@ class RetryOnError {
       errorHandlerStrategy || new CatchAllErrorHandler(),
       logStrategy || DefaultLogger.logError
     );
+  }
+
+  static *runExponential(generatorFunction, { maxTries = 5, exponentialBase = 2, multiplier = 5, logStrategy }) {
+    const retry = RetryOnError.createWithStrategy(generatorFunction, {
+      delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
+      errorHandlerStrategy: new CatchAllErrorHandler(),
+      logStrategy: logStrategy
+    });
+
+    return yield retry.run();
   }
 
   constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logStrategy) {
