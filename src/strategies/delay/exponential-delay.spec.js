@@ -28,4 +28,17 @@ describe('Exponential Strategy', () => {
 
   });
 
+  describe('#delay with multiplier', () => {
+
+    it('should wait on retry', function*() {
+      const subject = new ExponentialDelay(3, 10);
+      this.disableDelay();
+
+      yield subject.delay(2);
+
+      expect(Delay.wait).to.have.been.calledWith(20000, 2);
+    });
+
+  });
+
 });

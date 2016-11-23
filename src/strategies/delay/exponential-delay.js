@@ -3,7 +3,7 @@
 const Delay = require('@emartech/delay-js');
 
 class ExponentialDelay {
-  constructor(tries, exponentialBase = 2, multiplier = 1) {
+  constructor(tries, multiplier = 1, exponentialBase = 2) {
     this.multiplier = multiplier;
     [...this._delayInSeconds] = this._exponential(tries - 1, exponentialBase);
   }
