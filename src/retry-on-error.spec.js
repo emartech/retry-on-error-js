@@ -13,11 +13,13 @@ describe('Retry On Error', () => {
 
   beforeEach(function() {
     fn = this.sandbox.stub();
-
-    this.disableDelay();
   });
 
   describe('#run', () => {
+    beforeEach(function() {
+      this.disableDelay();
+    });
+
     it('should call once', function*() {
       fn.resolves();
 
@@ -143,7 +145,7 @@ describe('Retry On Error', () => {
         yield subject.run();
       } catch (e) {
         expect(DefaultLogger.logError).to.have.been.calledTwice;
-        expect(DefaultLogger.logError).to.have.been.calledWith(testError, {
+        expect(DefaultLogger.logError).to.have.been.calledWithMatch(testError, {
           attempts: 1,
           lastDelayTime: 0
         });
@@ -153,72 +155,105 @@ describe('Retry On Error', () => {
 
   const retryRunnerTesterFactory = function(runnerName, retryRunner, delays) {
     return function() {
-      it('should call successful function once', function*() {
-        fn.resolves();
+      describe('with disable delay', () => {
+        beforeEach(function() {
+          this.disableDelay();
+        });
 
-        yield retryRunner(fn);
+        it('should call successful function once', function*() {
+          fn.resolves();
 
-        expect(fn).to.have.been.calledOnce;
+          yield retryRunner(fn);
+
+          expect(fn).to.have.been.calledOnce;
+        });
+
+        it('should call rejected function thrice', function*() {
+          const testError = new Error();
+          const config = {
+            maxTries: 3
+          };
+          fn.onFirstCall().rejects(testError);
+          fn.onSecondCall().rejects(testError);
+          fn.onThirdCall().resolves();
+
+          yield retryRunner(fn, config);
+
+          expect(fn).to.have.been.calledThrice;
+        });
+
+        it('should return appropriate value', function*() {
+          const config = {
+            maxTries: 2
+          };
+          fn.onFirstCall().rejects(new Error());
+          fn.onSecondCall().resolves(2);
+
+          const result = yield retryRunner(fn, config);
+
+          expect(fn).to.have.been.calledTwice;
+          expect(result).to.eq(2);
+        });
+
+        it(`should use ${runnerName} delay strategy`, function*() {
+          fn.onCall(0).rejects(new Error());
+          fn.onCall(1).rejects(new Error());
+          fn.onCall(2).rejects(new Error());
+          fn.onCall(3).rejects(new Error());
+          fn.onCall(4).resolves();
+          const config = {
+            maxTries: 5,
+            multiplier: 1
+          };
+
+          yield retryRunner(fn, config);
+
+          expect(Delay.wait).to.have.been.callCount(4);
+          for (let i = 1; i < delays.length; i++) {
+            expect(Delay.wait).to.have.been.calledWith(delays[i]);
+          }
+        });
+
+        it('should throw error after 5 retries', function*() {
+          fn.rejects(new Error('always fails'));
+          const config = {
+            maxTries: 5
+          };
+
+          try {
+            yield retryRunner(fn, config);
+            throw new Error('error should be thrown');
+          } catch (e) {
+            expect(e.message).to.eql('always fails');
+            expect(fn).to.have.been.callCount(5);
+          }
+        });
       });
 
-      it('should call rejected function thrice', function*() {
-        const testError = new Error();
-        const config = {
-          maxTries: 3
-        };
-        fn.onFirstCall().rejects(testError);
-        fn.onSecondCall().rejects(testError);
-        fn.onThirdCall().resolves();
 
-        yield retryRunner(fn, config);
-
-        expect(fn).to.have.been.calledThrice;
-      });
-
-      it('should return appropriate value', function*() {
-        const config = {
-          maxTries: 2
-        };
-        fn.onFirstCall().rejects(new Error());
-        fn.onSecondCall().resolves(2);
-
-        const result = yield retryRunner(fn, config);
-
-        expect(fn).to.have.been.calledTwice;
-        expect(result).to.eq(2);
-      });
-
-      it(`should use ${runnerName} delay strategy`, function*() {
-        fn.onCall(0).rejects(new Error());
-        fn.onCall(1).rejects(new Error());
-        fn.onCall(2).rejects(new Error());
-        fn.onCall(3).rejects(new Error());
-        fn.onCall(4).resolves();
-        const config = {
-          maxTries: 5,
-          multiplier: 1
-        };
-
-        yield retryRunner(fn, config);
-
-        expect(Delay.wait).to.have.been.callCount(4);
-        for (let i = 0; i < delays.length; i++) {
-          expect(Delay.wait).to.have.been.calledWith(delays[i]);
-        }
-      });
-
-      it('should throw error after 5 retries', function*() {
+      it('should log failed attempt without context', function*() {
         fn.rejects(new Error('always fails'));
+        let delayStub = this.sandbox.stub(Delay, 'wait');
+        for (let i = 1; i < delays.length; i++) {
+          delayStub.onCall(i - 1).resolves(delays[i]);
+        }
+
+        this.sandbox.spy(DefaultLogger, 'logError');
+
         const config = {
-          maxTries: 5
+          maxTries: 4
         };
 
         try {
           yield retryRunner(fn, config);
-          throw new Error('error should be thrown');
         } catch (e) {
-          expect(e.message).to.eql('always fails');
-          expect(fn).to.have.been.callCount(5);
+          expect(DefaultLogger.logError).to.have.been.callCount(4);
+          for (let i = 0; i < delays.length - 1; i++) {
+            expect(DefaultLogger.logError).to.have.been.calledWithMatch(e, {
+              attempts: i + 1,
+              lastDelayTime: delays[i]
+            });
+          };
         }
       });
     };
@@ -231,9 +266,9 @@ describe('Retry On Error', () => {
   };
 
   const expectedDelays = {
-    '#runExponential': [1000, 2000, 4000, 8000],
-    '#runFibonacci': [1000, 2000, 3000, 5000],
-    '#runConstant': [1000, 1000, 1000, 1000]
+    '#runExponential': [0, 1000, 2000, 4000, 8000],
+    '#runFibonacci': [0, 1000, 2000, 3000, 5000],
+    '#runConstant': [0, 1000, 1000, 1000, 1000]
   };
 
   for (const functionName in retryRunners) {

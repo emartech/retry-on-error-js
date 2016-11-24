@@ -19,68 +19,73 @@ class RetryOnError {
     );
   }
 
-  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy, logStrategy }) {
+  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy, logStrategy, context }) {
     return new RetryOnError(
       generatorFunction,
       delayStrategy || new FibonacciDelay(config.maxTries),
       errorHandlerStrategy || new CatchAllErrorHandler(),
-      logStrategy || DefaultLogger.logError
+      logStrategy || DefaultLogger.logError,
+      context || { }
     );
   }
 
   static *runExponential(
     generatorFunction,
-    context = { },
     {
       maxTries = 5,
       exponentialBase = 2,
       multiplier = 5,
       logStrategy = DefaultLogger.logError
-    } = {}
+    } = {},
+    context = { }
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
-      logStrategy: logStrategy
+      logStrategy: logStrategy,
+      context: context
     });
     return yield retry.run();
   }
 
   static *runFibonacci(
     generatorFunction,
-    context = { },
     {
       maxTries = 5,
       multiplier = 5,
       logStrategy = DefaultLogger.logError
-    } = {}
+    } = {},
+    context = { }
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new FibonacciDelay(maxTries, multiplier),
-      logStrategy: logStrategy
+      logStrategy: logStrategy,
+      context: context
     });
     return yield retry.run();
   }
 
   static *runConstant(
     generatorFunction,
-    context = { },
     {
       maxTries = 5,
       multiplier = 5,
       logStrategy = DefaultLogger.logError
-    } = {}
+    } = {},
+    context = { }
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, 1),
-      logStrategy: logStrategy
+      logStrategy: logStrategy,
+      context: context
     });
     return yield retry.run();
   }
 
-  constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logStrategy) {
+  constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logStrategy, context) {
     this._delayStrategy = delayStrategy;
     this._errorHandlerStrategy = errorHandlerStrategy;
     this._logStrategy = logStrategy;
+    this._context = context;
     this.generatorFunction = generatorFunction;
     this.run = this.run.bind(this);
   }
@@ -95,7 +100,8 @@ class RetryOnError {
       try {
         return yield this.generatorFunction();
       } catch (e) {
-        this._logStrategy(e, { attempts, lastDelayTime });
+
+        this._logStrategy(e, { attempts, lastDelayTime, context: this._context });
 
         if (!this._errorHandlerStrategy.canCatch(e)) {
           throw e;
@@ -105,8 +111,8 @@ class RetryOnError {
         if (attempts > this._delayStrategy.maxTries) {
           throw e;
         }
-
         lastDelayTime = yield this._delayStrategy.delay(attempts);
+
       }
     } while (!wasSuccessful);
   }
