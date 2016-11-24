@@ -153,7 +153,7 @@ describe('Retry On Error', () => {
     it('should call successful function once', function*() {
       fn.resolves();
 
-      yield RetryOnError.runExponential(fn, {});
+      yield RetryOnError.runExponential(fn);
 
       expect(fn).to.have.been.calledOnce;
     });
@@ -203,6 +203,21 @@ describe('Retry On Error', () => {
       expect(Delay.wait).to.have.been.calledWith(2000);
       expect(Delay.wait).to.have.been.calledWith(4000);
       expect(Delay.wait).to.have.been.calledWith(8000);
+    });
+
+    it('should throw error after 5 retries', function*() {
+      fn.rejects(new Error('always fails'));
+      let config = {
+        maxTries: 5
+      };
+
+      try {
+        yield RetryOnError.runExponential(fn, config);
+        throw new Error('error should be thrown');
+      } catch (e) {
+        expect(e.message).to.eql('always fails');
+        expect(fn).to.have.been.callCount(5);
+      }
     });
   });
 });
