@@ -30,6 +30,7 @@ class RetryOnError {
 
   static *runExponential(
     generatorFunction,
+    context = { },
     {
       maxTries = 5,
       exponentialBase = 2,
@@ -46,6 +47,7 @@ class RetryOnError {
 
   static *runFibonacci(
     generatorFunction,
+    context = { },
     {
       maxTries = 5,
       multiplier = 5,
@@ -61,6 +63,7 @@ class RetryOnError {
 
   static *runConstant(
     generatorFunction,
+    context = { },
     {
       maxTries = 5,
       multiplier = 5,
