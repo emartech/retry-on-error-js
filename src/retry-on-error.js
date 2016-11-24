@@ -28,7 +28,8 @@ class RetryOnError {
     );
   }
 
-  static *runExponential(generatorFunction, { maxTries = 5, exponentialBase = 2, multiplier = 5, logStrategy = DefaultLogger.logError}) {
+  static *runExponential(generatorFunction,
+    { maxTries = 5, exponentialBase = 2, multiplier = 5, logStrategy = DefaultLogger.logError }) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
       errorHandlerStrategy: new CatchAllErrorHandler(),

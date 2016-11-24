@@ -172,17 +172,17 @@ describe('Retry On Error', () => {
       expect(fn).to.have.been.calledThrice;
     });
 
-    it('returns appropriate value', function*() {
+    it('should return appropriate value', function*() {
       const config = {
         maxTries: 2
       };
       fn.onFirstCall().rejects(new Error());
-      fn.onSecondCall().resolves(2)
+      fn.onSecondCall().resolves(2);
 
       let result = yield RetryOnError.runExponential(fn, config);
 
       expect(fn).to.have.been.calledTwice;
       expect(result).to.eq(2);
     });
-  })
+  });
 });
