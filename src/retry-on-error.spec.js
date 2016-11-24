@@ -133,7 +133,9 @@ describe('Retry On Error', () => {
 
       const testError = new Error('always fail');
       const subject = RetryOnError.createWithStrategy(
-        function*() { throw testError; },
+        function*() {
+          throw testError;
+        },
         { delayStrategy: new ExponentialDelay(2) }
       );
 
@@ -149,76 +151,96 @@ describe('Retry On Error', () => {
     });
   });
 
-  describe('#runExponential', () => {
-    it('should call successful function once', function*() {
-      fn.resolves();
+  const staticRunTesterFactory = function(runnerName, retryRunner, delays) {
+    return function() {
+      it('should call successful function once', function*() {
+        fn.resolves();
 
-      yield RetryOnError.runExponential(fn);
+        yield retryRunner(fn);
 
-      expect(fn).to.have.been.calledOnce;
-    });
+        expect(fn).to.have.been.calledOnce;
+      });
 
-    it('should call rejected function thrice', function*() {
-      const testError = new Error();
-      const config = {
-        maxTries: 3
-      };
-      fn.onFirstCall().rejects(testError);
-      fn.onSecondCall().rejects(testError);
-      fn.onThirdCall().resolves();
+      it('should call rejected function thrice', function*() {
+        const testError = new Error();
+        const config = {
+          maxTries: 3
+        };
+        fn.onFirstCall().rejects(testError);
+        fn.onSecondCall().rejects(testError);
+        fn.onThirdCall().resolves();
 
-      yield RetryOnError.runExponential(fn, config);
+        yield retryRunner(fn, config);
 
-      expect(fn).to.have.been.calledThrice;
-    });
+        expect(fn).to.have.been.calledThrice;
+      });
 
-    it('should return appropriate value', function*() {
-      const config = {
-        maxTries: 2
-      };
-      fn.onFirstCall().rejects(new Error());
-      fn.onSecondCall().resolves(2);
+      it('should return appropriate value', function*() {
+        const config = {
+          maxTries: 2
+        };
+        fn.onFirstCall().rejects(new Error());
+        fn.onSecondCall().resolves(2);
 
-      let result = yield RetryOnError.runExponential(fn, config);
+        let result = yield retryRunner(fn, config);
 
-      expect(fn).to.have.been.calledTwice;
-      expect(result).to.eq(2);
-    });
+        expect(fn).to.have.been.calledTwice;
+        expect(result).to.eq(2);
+      });
 
-    it('should use exponential delay strategy', function*() {
-      fn.onCall(0).rejects(new Error());
-      fn.onCall(1).rejects(new Error());
-      fn.onCall(2).rejects(new Error());
-      fn.onCall(3).rejects(new Error());
-      fn.onCall(4).resolves();
-      let config = {
-        maxTries: 5,
-        multiplier: 1,
-        exponentialBase: 2
-      };
+      it(`should use ${runnerName} delay strategy`, function*() {
+        fn.onCall(0).rejects(new Error());
+        fn.onCall(1).rejects(new Error());
+        fn.onCall(2).rejects(new Error());
+        fn.onCall(3).rejects(new Error());
+        fn.onCall(4).resolves();
+        let config = {
+          maxTries: 5,
+          multiplier: 1
+        };
 
-      yield RetryOnError.runExponential(fn, config);
+        yield retryRunner(fn, config);
 
-      expect(Delay.wait).to.have.been.callCount(4);
-      expect(Delay.wait).to.have.been.calledWith(1000);
-      expect(Delay.wait).to.have.been.calledWith(2000);
-      expect(Delay.wait).to.have.been.calledWith(4000);
-      expect(Delay.wait).to.have.been.calledWith(8000);
-    });
+        expect(Delay.wait).to.have.been.callCount(4);
+        for (let i = 0; i < delays.length; i++) {
+          expect(Delay.wait).to.have.been.calledWith(delays[i]);
+        }
+      });
 
-    it('should throw error after 5 retries', function*() {
-      fn.rejects(new Error('always fails'));
-      let config = {
-        maxTries: 5
-      };
+      it('should throw error after 5 retries', function*() {
+        fn.rejects(new Error('always fails'));
+        let config = {
+          maxTries: 5
+        };
 
-      try {
-        yield RetryOnError.runExponential(fn, config);
-        throw new Error('error should be thrown');
-      } catch (e) {
-        expect(e.message).to.eql('always fails');
-        expect(fn).to.have.been.callCount(5);
-      }
-    });
-  });
+        try {
+          yield retryRunner(fn, config);
+          throw new Error('error should be thrown');
+        } catch (e) {
+          expect(e.message).to.eql('always fails');
+          expect(fn).to.have.been.callCount(5);
+        }
+      });
+    };
+  };
+
+  let retryRunners = {
+    '#runExponential': RetryOnError.runExponential,
+    '#runFibonacci': RetryOnError.runFibonacci,
+    '#runConstant': RetryOnError.runConstant
+  };
+
+  let expectedDelays = {
+    '#runExponential': [1000, 2000, 4000, 8000],
+    '#runFibonacci': [1000, 2000, 3000, 5000],
+    '#runConstant': [1000, 1000, 1000, 1000]
+  };
+
+  for (let functionName in retryRunners) {
+    describe(functionName, staticRunTesterFactory(
+      functionName,
+      retryRunners[functionName],
+      expectedDelays[functionName]
+    ));
+  }
 });
