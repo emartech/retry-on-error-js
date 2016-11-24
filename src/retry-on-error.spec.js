@@ -182,7 +182,7 @@ describe('Retry On Error', () => {
         fn.onFirstCall().rejects(new Error());
         fn.onSecondCall().resolves(2);
 
-        let result = yield retryRunner(fn, config);
+        const result = yield retryRunner(fn, config);
 
         expect(fn).to.have.been.calledTwice;
         expect(result).to.eq(2);
@@ -194,7 +194,7 @@ describe('Retry On Error', () => {
         fn.onCall(2).rejects(new Error());
         fn.onCall(3).rejects(new Error());
         fn.onCall(4).resolves();
-        let config = {
+        const config = {
           maxTries: 5,
           multiplier: 1
         };
@@ -209,7 +209,7 @@ describe('Retry On Error', () => {
 
       it('should throw error after 5 retries', function*() {
         fn.rejects(new Error('always fails'));
-        let config = {
+        const config = {
           maxTries: 5
         };
 
@@ -224,19 +224,19 @@ describe('Retry On Error', () => {
     };
   };
 
-  let retryRunners = {
+  const retryRunners = {
     '#runExponential': RetryOnError.runExponential,
     '#runFibonacci': RetryOnError.runFibonacci,
     '#runConstant': RetryOnError.runConstant
   };
 
-  let expectedDelays = {
+  const expectedDelays = {
     '#runExponential': [1000, 2000, 4000, 8000],
     '#runFibonacci': [1000, 2000, 3000, 5000],
     '#runConstant': [1000, 1000, 1000, 1000]
   };
 
-  for (let functionName in retryRunners) {
+  for (const functionName in retryRunners) {
     describe(functionName, retryRunnerTesterFactory(
       functionName,
       retryRunners[functionName],
