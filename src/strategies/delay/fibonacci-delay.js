@@ -4,13 +4,14 @@ const Delay = require('@emartech/delay-js');
 
 class FibonacciDelay {
 
-  constructor(tries) {
+  constructor(tries, multiplier = 1) {
+    this._multiplier = multiplier;
     [...this._delayInSeconds] = this._fibonacci(tries - 1);
   }
 
   delay(attempts) {
     const delayInSeconds = this._delayInSeconds[attempts - 1];
-    const delayInMilliSeconds = delayInSeconds * 1000;
+    const delayInMilliSeconds = delayInSeconds * 1000 * this._multiplier;
     return Delay.wait(delayInMilliSeconds, delayInSeconds);
   }
 
