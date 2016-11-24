@@ -193,7 +193,8 @@ describe('Retry On Error', () => {
       fn.onCall(4).resolves();
       let config = {
         maxTries: 5,
-        multiplier: 1
+        multiplier: 1,
+        exponentialBase: 2
       };
 
       yield RetryOnError.runExponential(fn, config);
