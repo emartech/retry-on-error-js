@@ -184,5 +184,25 @@ describe('Retry On Error', () => {
       expect(fn).to.have.been.calledTwice;
       expect(result).to.eq(2);
     });
+
+    it('should use exponential delay strategy', function*() {
+      fn.onCall(0).rejects(new Error());
+      fn.onCall(1).rejects(new Error());
+      fn.onCall(2).rejects(new Error());
+      fn.onCall(3).rejects(new Error());
+      fn.onCall(4).resolves();
+      let config = {
+        maxTries: 5,
+        multiplier: 1
+      };
+
+      yield RetryOnError.runExponential(fn, config);
+
+      expect(Delay.wait).to.have.been.callCount(4);
+      expect(Delay.wait).to.have.been.calledWith(1000);
+      expect(Delay.wait).to.have.been.calledWith(2000);
+      expect(Delay.wait).to.have.been.calledWith(4000);
+      expect(Delay.wait).to.have.been.calledWith(8000);
+    });
   });
 });
