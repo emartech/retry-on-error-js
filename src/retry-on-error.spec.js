@@ -151,7 +151,7 @@ describe('Retry On Error', () => {
     });
   });
 
-  const staticRunTesterFactory = function(runnerName, retryRunner, delays) {
+  const retryRunnerTesterFactory = function(runnerName, retryRunner, delays) {
     return function() {
       it('should call successful function once', function*() {
         fn.resolves();
@@ -237,7 +237,7 @@ describe('Retry On Error', () => {
   };
 
   for (let functionName in retryRunners) {
-    describe(functionName, staticRunTesterFactory(
+    describe(functionName, retryRunnerTesterFactory(
       functionName,
       retryRunners[functionName],
       expectedDelays[functionName]
