@@ -39,10 +39,38 @@ class RetryOnError {
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
-      errorHandlerStrategy: new CatchAllErrorHandler(),
       logStrategy: logStrategy
     });
+    return yield retry.run();
+  }
 
+  static *runFibonacci(
+    generatorFunction,
+    {
+      maxTries = 5,
+      multiplier = 5,
+      logStrategy = DefaultLogger.logError
+    } = {}
+  ) {
+    const retry = RetryOnError.createWithStrategy(generatorFunction, {
+      delayStrategy: new FibonacciDelay(maxTries, multiplier),
+      logStrategy: logStrategy
+    });
+    return yield retry.run();
+  }
+
+  static *runConstant(
+    generatorFunction,
+    {
+      maxTries = 5,
+      multiplier = 5,
+      logStrategy = DefaultLogger.logError
+    } = {}
+  ) {
+    const retry = RetryOnError.createWithStrategy(generatorFunction, {
+      delayStrategy: new ExponentialDelay(maxTries, multiplier, 1),
+      logStrategy: logStrategy
+    });
     return yield retry.run();
   }
 
