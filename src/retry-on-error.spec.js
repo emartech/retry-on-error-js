@@ -237,9 +237,7 @@ describe('Retry On Error', () => {
         for (let i = 1; i < delays.length; i++) {
           delayStub.onCall(i - 1).resolves(delays[i]);
         }
-
         this.sandbox.spy(DefaultLogger, 'logError');
-
         const config = {
           maxTries: 4
         };
@@ -253,7 +251,7 @@ describe('Retry On Error', () => {
               attempts: i + 1,
               lastDelayTime: delays[i]
             });
-          };
+          }
         }
       });
     };
