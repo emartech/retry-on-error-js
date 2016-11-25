@@ -9,9 +9,10 @@ class DefaultLogger {
         attempt: attempts,
         delay: lastDelayTime
       },
+      context,
       e
     );
-    logger.log('retry', logObject );
+    logger.log('retry', logObject);
   }
 }
 
