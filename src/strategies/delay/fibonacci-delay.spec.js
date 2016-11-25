@@ -1,14 +1,14 @@
 'use strict';
 
 const Delay = require('@emartech/delay-js');
-const ExponentialDelay = require('./exponential-delay');
+const FibonacciDelay = require('./fibonacci-delay');
 
 describe('Exponential Strategy', () => {
 
   describe('#maxTries', () => {
 
     it('should set up max tries properly', function() {
-      const subject = new ExponentialDelay(3);
+      const subject = new FibonacciDelay(3);
 
       expect(subject.maxTries).to.eq(2);
     });
@@ -18,7 +18,7 @@ describe('Exponential Strategy', () => {
   describe('#delay', () => {
 
     it('should wait on retry', function*() {
-      const subject = new ExponentialDelay(3);
+      const subject = new FibonacciDelay(3);
       this.disableDelay();
 
       yield subject.delay(2);
@@ -28,10 +28,10 @@ describe('Exponential Strategy', () => {
 
   });
 
-  describe('#delay with multiplier', () => {
+  describe('#delay with _multiplier', () => {
 
     it('should wait on retry', function*() {
-      const subject = new ExponentialDelay(3, 10);
+      const subject = new FibonacciDelay(3, 10);
       this.disableDelay();
 
       yield subject.delay(2);
