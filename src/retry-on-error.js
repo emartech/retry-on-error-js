@@ -31,13 +31,13 @@ class RetryOnError {
 
   static *runExponential(
     generatorFunction,
+    context = { },
     {
       maxTries = 5,
       exponentialBase = 2,
       multiplier = 5,
       logStrategy = DefaultLogger.logError
-    } = {},
-    context = { }
+    } = {}
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
@@ -49,12 +49,12 @@ class RetryOnError {
 
   static *runFibonacci(
     generatorFunction,
+    context = { },
     {
       maxTries = 5,
       multiplier = 5,
       logStrategy = DefaultLogger.logError
-    } = {},
-    context = { }
+    } = {}
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new FibonacciDelay(maxTries, multiplier),
@@ -66,12 +66,12 @@ class RetryOnError {
 
   static *runConstant(
     generatorFunction,
+    context = { },
     {
       maxTries = 5,
       multiplier = 5,
       logStrategy = DefaultLogger.logError
-    } = {},
-    context = { }
+    } = {}
   ) {
     const retry = RetryOnError.createWithStrategy(generatorFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, 1),

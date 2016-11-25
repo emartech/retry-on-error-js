@@ -190,7 +190,7 @@ describe('Retry On Error', () => {
             fn.onSecondCall().rejects(testError);
             fn.onThirdCall().resolves();
 
-            yield retryRunner(fn, config);
+            yield retryRunner(fn, {}, config);
 
             expect(fn).to.have.been.calledThrice;
           });
@@ -202,7 +202,7 @@ describe('Retry On Error', () => {
             fn.onFirstCall().rejects(new Error());
             fn.onSecondCall().resolves(2);
 
-            const result = yield retryRunner(fn, config);
+            const result = yield retryRunner(fn, {}, config);
 
             expect(fn).to.have.been.calledTwice;
             expect(result).to.eq(2);
@@ -219,7 +219,7 @@ describe('Retry On Error', () => {
               multiplier: 1
             };
 
-            yield retryRunner(fn, config);
+            yield retryRunner(fn, {}, config);
 
             expect(Delay.wait).to.have.been.callCount(4);
             for (let i = 1; i < delays.length; i++) {
@@ -234,7 +234,7 @@ describe('Retry On Error', () => {
             };
 
             try {
-              yield retryRunner(fn, config);
+              yield retryRunner(fn, {}, config);
               throw new Error('error should be thrown');
             } catch (e) {
               expect(e.message).to.eql('always fails');
@@ -256,7 +256,7 @@ describe('Retry On Error', () => {
           };
 
           try {
-            yield retryRunner(fn, config);
+            yield retryRunner(fn, {}, config);
           } catch (e) {
             expect(DefaultLogger.logError).to.have.been.callCount(4);
             for (let i = 0; i < delays.length - 1; i++) {
@@ -286,7 +286,7 @@ describe('Retry On Error', () => {
           };
 
           try {
-            yield retryRunner(fn, config, context);
+            yield retryRunner(fn, context, config);
           } catch (e) {
             expect(DefaultLogger.logError).to.have.been.callCount(4);
             for (let i = 0; i < delays.length - 1; i++) {
