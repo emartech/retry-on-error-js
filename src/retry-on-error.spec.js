@@ -231,7 +231,7 @@ describe('Retry On Error', () => {
       });
 
 
-      it('should log failed attempt without context', function*() {
+      it('should log failed attempt, no context', function*() {
         fn.rejects(new Error('always fails'));
         let delayStub = this.sandbox.stub(Delay, 'wait');
         for (let i = 1; i < delays.length; i++) {
@@ -250,6 +250,37 @@ describe('Retry On Error', () => {
             expect(DefaultLogger.logError).to.have.been.calledWithMatch(e, {
               attempts: i + 1,
               lastDelayTime: delays[i]
+            });
+          }
+        }
+      });
+
+      it('should log failed attempt, context', function*() {
+        fn.rejects(new Error('always fails'));
+        let delayStub = this.sandbox.stub(Delay, 'wait');
+        for (let i = 1; i < delays.length; i++) {
+          delayStub.onCall(i - 1).resolves(delays[i]);
+        }
+        this.sandbox.spy(DefaultLogger, 'logError');
+        const testproperty1 = 'this is the first test property';
+        const testproperty2 = 'this is the second test property';
+        const context = {
+          testproperty1,
+          testproperty2
+        };
+        const config = {
+          maxTries: 4
+        };
+
+        try {
+          yield retryRunner(fn, config, context);
+        } catch (e) {
+          expect(DefaultLogger.logError).to.have.been.callCount(4);
+          for (let i = 0; i < delays.length - 1; i++) {
+            expect(DefaultLogger.logError).to.have.been.calledWithMatch(e, {
+              attempts: i + 1,
+              lastDelayTime: delays[i],
+              context
             });
           }
         }
