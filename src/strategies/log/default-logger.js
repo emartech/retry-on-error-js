@@ -1,19 +1,24 @@
 'use strict';
 
-const logger = require('logentries-logformat')('retry-on-error');
+const Logger = require('logentries-logformat')('retry-on-error');
 
 class DefaultLogger {
   static logError(e, { attempts, lastDelayTime, context = {} }) {
     const logObject = Object.assign({},
       {
         attempt: attempts,
-        delay: lastDelayTime
+        delay: lastDelayTime,
+        e
       },
-      context,
-      e
+      context
     );
-    logger.log('retry', logObject);
+    DefaultLogger.callLogWithFlattenProperties(logObject);
   }
+
+  static callLogWithFlattenProperties(logObject = {}) {
+    Logger.log('retry', logObject);
+  }
+
 }
 
 module.exports = DefaultLogger;
