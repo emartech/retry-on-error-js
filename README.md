@@ -1,6 +1,7 @@
 # retry-on-error-js
 
-Generator based retry utility.
+Generator based retry function intended to be used inside 
+[co](https://github.com/tj/co) or [koa](https://github.com/koajs/koa).
 
 ## Installation
 
@@ -15,6 +16,8 @@ npm i @emartech/retry-on-error --save
 Wait time: multiplier * exponentialBase ^ n, where n is the try counter. 
 
 ```javascript
+let retryOnError = require('@emartech/retry-on-error');
+
 let result = yield retryOnError.runExponential(
   function*() { return yield Promise.resolve(10); }, // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
@@ -35,6 +38,8 @@ let result = yield retryOnError.runExponential(
 Wait time: multiplier * Fibonacci(n), where n is the try counter.
 
 ```javascript
+let retryOnError = require('@emartech/retry-on-error');
+
 let result = yield retryOnError.runFibonacci(
   function*() { return yield Promise.resolve(10); }, // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
@@ -54,6 +59,8 @@ let result = yield retryOnError.runFibonacci(
 Wait time: multiplier. 
 
 ```javascript
+let retryOnError = require('@emartech/retry-on-error');
+
 let result = yield retryOnError.runConstant(
   function*() { return yield Promise.resolve(10); }, // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
