@@ -15,8 +15,8 @@ npm i @emartech/retry-on-error --save
 Wait time: multiplier * exponentialBase ^ n, where n is the try counter. 
 
 ```javascript
-yield retryOnError.runExponential(
-  function*() { return yield Promise.resolve(10); }, // generator function that will run for maxTries time
+let result = yield retryOnError.runExponential(
+  function*() { return yield Promise.resolve(10); }, // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
   {
     maxTries: 5, // how many times to try running given function
@@ -27,6 +27,7 @@ yield retryOnError.runExponential(
     }
   }
 );
+// result: 10
 ```
 
 ### Fibonacci
@@ -34,8 +35,8 @@ yield retryOnError.runExponential(
 Wait time: multiplier * Fibonacci(n), where n is the try counter.
 
 ```javascript
-yield retryOnError.runFibonacci(
-  function*() { return yield Promise.resolve(10); }, // generator function that will run for maxTries time
+let result = yield retryOnError.runFibonacci(
+  function*() { return yield Promise.resolve(10); }, // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
   {
     maxTries: 5, // how many times to try running given function
@@ -45,6 +46,7 @@ yield retryOnError.runFibonacci(
     }
   }
 );
+// result: 10
 ```
 
 ### Constant
@@ -52,8 +54,8 @@ yield retryOnError.runFibonacci(
 Wait time: multiplier. 
 
 ```javascript
-yield retryOnError.runConstant(
-  function*() { return yield Promise.resolve(10); }, // generator function that will run for maxTries time
+let result = yield retryOnError.runConstant(
+  function*() { return yield Promise.resolve(10); }, // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
   {
     maxTries: 5, // how many times to try running given function
@@ -63,6 +65,7 @@ yield retryOnError.runConstant(
     }
   }
 );
+// result: 10
 ```
 
 ### Customization
