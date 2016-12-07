@@ -9,8 +9,8 @@ class ExponentialDelay {
   }
 
   delay(attempts) {
-    const delayInSeconds = this._delayInSeconds[attempts - 1];
-    const delayInMilliSeconds = delayInSeconds * 1000 * this._multiplier;
+    const delayInSeconds = this._delayInSeconds[attempts - 1] * this._multiplier;
+    const delayInMilliSeconds = delayInSeconds * 1000;
     return Delay.wait(delayInMilliSeconds, delayInSeconds);
   }
 
