@@ -8,9 +8,9 @@ const DefaultLogger = require('./strategies/log/default-logger');
 
 class RetryOnError {
 
-  static create(generatorFunction, maxTries) {
+  static create(asyncFunction, maxTries) {
     return RetryOnError.createWithStrategy(
-      generatorFunction,
+      asyncFunction,
       {
         delayStrategy: new FibonacciDelay(maxTries || config.maxTries),
         errorHandlerStrategy: new CatchAllErrorHandler(),
@@ -19,9 +19,9 @@ class RetryOnError {
     );
   }
 
-  static createWithStrategy(generatorFunction, { delayStrategy, errorHandlerStrategy, logStrategy, context }) {
+  static createWithStrategy(asyncFunction, { delayStrategy, errorHandlerStrategy, logStrategy, context }) {
     return new RetryOnError(
-      generatorFunction,
+      asyncFunction,
       delayStrategy || new FibonacciDelay(config.maxTries),
       errorHandlerStrategy || new CatchAllErrorHandler(),
       logStrategy || DefaultLogger.logError,
@@ -29,8 +29,8 @@ class RetryOnError {
     );
   }
 
-  static *runExponential(
-    generatorFunction,
+  static async runExponential(
+    asyncFunction,
     context = { },
     {
       maxTries = 5,
@@ -39,16 +39,16 @@ class RetryOnError {
       logStrategy = DefaultLogger.logError
     } = {}
   ) {
-    const retry = RetryOnError.createWithStrategy(generatorFunction, {
+    const retry = RetryOnError.createWithStrategy(asyncFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, exponentialBase),
       logStrategy: logStrategy,
       context: context
     });
-    return yield retry.run();
+    return await retry.run();
   }
 
-  static *runFibonacci(
-    generatorFunction,
+  static async runFibonacci(
+    asyncFunction,
     context = { },
     {
       maxTries = 5,
@@ -56,16 +56,16 @@ class RetryOnError {
       logStrategy = DefaultLogger.logError
     } = {}
   ) {
-    const retry = RetryOnError.createWithStrategy(generatorFunction, {
+    const retry = RetryOnError.createWithStrategy(asyncFunction, {
       delayStrategy: new FibonacciDelay(maxTries, multiplier),
       logStrategy: logStrategy,
       context: context
     });
-    return yield retry.run();
+    return await retry.run();
   }
 
-  static *runConstant(
-    generatorFunction,
+  static async runConstant(
+    asyncFunction,
     context = { },
     {
       maxTries = 5,
@@ -73,24 +73,24 @@ class RetryOnError {
       logStrategy = DefaultLogger.logError
     } = {}
   ) {
-    const retry = RetryOnError.createWithStrategy(generatorFunction, {
+    const retry = RetryOnError.createWithStrategy(asyncFunction, {
       delayStrategy: new ExponentialDelay(maxTries, multiplier, 1),
       logStrategy: logStrategy,
       context: context
     });
-    return yield retry.run();
+    return await retry.run();
   }
 
-  constructor(generatorFunction, delayStrategy, errorHandlerStrategy, logStrategy, context) {
+  constructor(asyncFunction, delayStrategy, errorHandlerStrategy, logStrategy, context) {
     this._delayStrategy = delayStrategy;
     this._errorHandlerStrategy = errorHandlerStrategy;
     this._logStrategy = logStrategy;
     this._context = context;
-    this.generatorFunction = generatorFunction;
+    this.asyncFunction = asyncFunction;
     this.run = this.run.bind(this);
   }
 
-  *run() {
+  async run() {
     let attempts = 0;
     let wasSuccessful;
     let lastDelayTime = 0;
@@ -98,7 +98,7 @@ class RetryOnError {
       wasSuccessful = true;
       attempts++;
       try {
-        return yield this.generatorFunction();
+        return await this.asyncFunction();
       } catch (e) {
 
         this._logStrategy(e, { attempts, lastDelayTime, context: this._context });
@@ -111,7 +111,7 @@ class RetryOnError {
         if (attempts > this._delayStrategy.maxTries) {
           throw e;
         }
-        lastDelayTime = yield this._delayStrategy.delay(attempts);
+        lastDelayTime = await this._delayStrategy.delay(attempts);
 
       }
     } while (!wasSuccessful);

@@ -13,6 +13,9 @@
     "onmessage": true,
     "expect": true
   },
+  "parserOptions": {
+    "ecmaVersion": 2017
+  },
   "rules": {
     "no-unused-expressions": 0,
     "no-unused-vars": [2, { "vars": "all", "args": "after-used" }],

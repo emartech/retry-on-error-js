@@ -20,29 +20,29 @@ describe('Retry On Error', () => {
       this.disableDelay();
     });
 
-    it('should call once', function*() {
+    it('should call once', async function() {
       fn.resolves();
 
-      yield getSubject().run();
+      await getSubject().run();
 
       expect(fn).to.have.been.calledOnce;
     });
 
-    it('should call thrice', function*() {
+    it('should call thrice', async function() {
       fn.onFirstCall().rejects(new Error());
       fn.onSecondCall().rejects(new Error());
       fn.onThirdCall().resolves();
 
-      yield getSubject().run();
+      await getSubject().run();
 
       expect(fn).to.have.been.calledThrice;
     });
 
-    it('should throw error after 5 retries', function*() {
+    it('should throw error after 5 retries', async function() {
       fn.rejects(new Error('some error'));
 
       try {
-        yield getSubject().run();
+        await getSubject().run();
       } catch (e) {
         expect(e.message).to.eql('some error');
         expect(fn).to.have.been.callCount(5);
@@ -52,12 +52,12 @@ describe('Retry On Error', () => {
       throw new Error('error should be thrown');
     });
 
-    it('should throw error after 10 retries', function*() {
+    it('should throw error after 10 retries', async function() {
       let subject = () => RetryOnError.create(fn, 10);
       fn.rejects(new Error('some error'));
 
       try {
-        yield subject().run();
+        await subject().run();
       } catch (e) {
         expect(e.message).to.eql('some error');
         expect(fn).to.have.been.callCount(10);
@@ -67,14 +67,14 @@ describe('Retry On Error', () => {
       throw new Error('error should be thrown');
     });
 
-    it('should wait between retries', function*() {
+    it('should wait between retries', async function() {
       fn.onCall(0).rejects(new Error());
       fn.onCall(1).rejects(new Error());
       fn.onCall(2).rejects(new Error());
       fn.onCall(3).rejects(new Error());
       fn.onCall(4).resolves();
 
-      yield getSubject().run();
+      await getSubject().run();
 
       expect(Delay.wait).to.have.been.callCount(4);
       expect(Delay.wait).to.have.been.calledWith(1000);
@@ -83,7 +83,7 @@ describe('Retry On Error', () => {
       expect(Delay.wait).to.have.been.calledWith(5000);
     });
 
-    it('should call thrice using an injected delay strategy', function*() {
+    it('should call thrice using an injected delay strategy', async function() {
       const delayStrategy = {
         delay: this.sandbox.stub().resolves(),
         get maxTries() {
@@ -96,13 +96,13 @@ describe('Retry On Error', () => {
       fn.onSecondCall().rejects(new Error());
       fn.onThirdCall().resolves();
 
-      yield subject.run();
+      await subject.run();
 
       expect(fn).to.have.been.calledThrice;
       expect(delayStrategy.delay).to.have.been.calledTwice;
     });
 
-    it('should use the injected error handler strategy', function*() {
+    it('should use the injected error handler strategy', async function() {
       const delayStrategy = {
         delay: this.sandbox.stub().resolves(),
         get maxTries() {
@@ -118,7 +118,7 @@ describe('Retry On Error', () => {
       fn.rejects(testError);
 
       try {
-        yield subject.run();
+        await subject.run();
       } catch (e) {
         expect(e).to.eq(testError);
         expect(fn).to.have.been.calledOnce;
@@ -130,19 +130,19 @@ describe('Retry On Error', () => {
       throw new Error('Error expected');
     });
 
-    it('should log failed attempt', function*() {
+    it('should log failed attempt', async function() {
       this.sandbox.stub(DefaultLogger, 'logError');
 
       const testError = new Error('always fail');
       const subject = RetryOnError.createWithStrategy(
-        function*() {
+        async function() {
           throw testError;
         },
         { delayStrategy: new ExponentialDelay(2) }
       );
 
       try {
-        yield subject.run();
+        await subject.run();
       } catch (e) {
         expect(DefaultLogger.logError).to.have.been.calledTwice;
         expect(DefaultLogger.logError).to.have.been.calledWithMatch(testError, {
@@ -173,15 +173,15 @@ describe('Retry On Error', () => {
             this.disableDelay();
           });
 
-          it('should call successful function once', function*() {
+          it('should call successful function once', async function() {
             fn.resolves();
 
-            yield retryRunner(fn);
+            await retryRunner(fn);
 
             expect(fn).to.have.been.calledOnce;
           });
 
-          it('should call rejected function thrice', function*() {
+          it('should call rejected function thrice', async function() {
             const testError = new Error();
             const config = {
               maxTries: 3
@@ -190,25 +190,25 @@ describe('Retry On Error', () => {
             fn.onSecondCall().rejects(testError);
             fn.onThirdCall().resolves();
 
-            yield retryRunner(fn, {}, config);
+            await retryRunner(fn, {}, config);
 
             expect(fn).to.have.been.calledThrice;
           });
 
-          it('should return appropriate value', function*() {
+          it('should return appropriate value', async function() {
             const config = {
               maxTries: 2
             };
             fn.onFirstCall().rejects(new Error());
             fn.onSecondCall().resolves(2);
 
-            const result = yield retryRunner(fn, {}, config);
+            const result = await retryRunner(fn, {}, config);
 
             expect(fn).to.have.been.calledTwice;
             expect(result).to.eq(2);
           });
 
-          it(`should use ${runnerName} delay strategy`, function*() {
+          it(`should use ${runnerName} delay strategy`, async function() {
             fn.onCall(0).rejects(new Error());
             fn.onCall(1).rejects(new Error());
             fn.onCall(2).rejects(new Error());
@@ -219,7 +219,7 @@ describe('Retry On Error', () => {
               multiplier: 1
             };
 
-            yield retryRunner(fn, {}, config);
+            await retryRunner(fn, {}, config);
 
             expect(Delay.wait).to.have.been.callCount(4);
             for (let i = 1; i < delays.length; i++) {
@@ -227,14 +227,14 @@ describe('Retry On Error', () => {
             }
           });
 
-          it('should throw error after 5 retries', function*() {
+          it('should throw error after 5 retries', async function() {
             fn.rejects(new Error('always fails'));
             const config = {
               maxTries: 5
             };
 
             try {
-              yield retryRunner(fn, {}, config);
+              await retryRunner(fn, {}, config);
               throw new Error('error should be thrown');
             } catch (e) {
               expect(e.message).to.eql('always fails');
@@ -244,7 +244,7 @@ describe('Retry On Error', () => {
         });
 
 
-        it('should log failed attempt, no context', function*() {
+        it('should log failed attempt, no context', async function() {
           fn.rejects(new Error('always fails'));
           let delayStub = this.sandbox.stub(Delay, 'wait');
           for (let i = 1; i < delays.length; i++) {
@@ -256,7 +256,7 @@ describe('Retry On Error', () => {
           };
 
           try {
-            yield retryRunner(fn, {}, config);
+            await retryRunner(fn, {}, config);
           } catch (e) {
             expect(DefaultLogger.logError).to.have.been.callCount(4);
             for (let i = 0; i < delays.length - 1; i++) {
@@ -268,7 +268,7 @@ describe('Retry On Error', () => {
           }
         });
 
-        it('should log failed attempt, context', function*() {
+        it('should log failed attempt, context', async function() {
           fn.rejects(new Error('always fails'));
           let delayStub = this.sandbox.stub(Delay, 'wait');
           for (let i = 1; i < delays.length; i++) {
@@ -286,7 +286,7 @@ describe('Retry On Error', () => {
           };
 
           try {
-            yield retryRunner(fn, context, config);
+            await retryRunner(fn, context, config);
           } catch (e) {
             expect(DefaultLogger.logError).to.have.been.callCount(4);
             for (let i = 0; i < delays.length - 1; i++) {
