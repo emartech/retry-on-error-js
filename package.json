@@ -27,6 +27,9 @@
     "validate-commit-msg"
   ],
   "homepage": "https://github.com/emartech/retry-on-error-js",
+  "engines": {
+    "node": ">=7.6.0"
+  },
   "dependencies": {
     "@emartech/delay-js": "1.0.0",
     "logentries-logformat": "0.1.4"
