@@ -1,7 +1,7 @@
 # retry-on-error-js
 
-Generator based retry function intended to be used inside 
-[co](https://github.com/tj/co) or [koa](https://github.com/koajs/koa).
+Async/await based retry function intended to be used inside
+[koa](https://github.com/koajs/koa).
 
 ## Installation
 
@@ -18,8 +18,8 @@ Wait time: multiplier * exponentialBase ^ n, where n is the try counter.
 ```javascript
 let retryOnError = require('@emartech/retry-on-error');
 
-let result = yield retryOnError.runExponential(
-  function*() { return yield Promise.resolve(10); }, // will run for maxTries time
+let result = await retryOnError.runExponential(
+  async () => await Promise.resolve(10), // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
   {
     maxTries: 5, // how many times to try running given function
@@ -40,8 +40,8 @@ Wait time: multiplier * Fibonacci(n), where n is the try counter.
 ```javascript
 let retryOnError = require('@emartech/retry-on-error');
 
-let result = yield retryOnError.runFibonacci(
-  function*() { return yield Promise.resolve(10); }, // will run for maxTries time
+let result = await retryOnError.runFibonacci(
+  async () => await Promise.resolve(10), // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
   {
     maxTries: 5, // how many times to try running given function
@@ -61,8 +61,8 @@ Wait time: multiplier.
 ```javascript
 let retryOnError = require('@emartech/retry-on-error');
 
-let result = yield retryOnError.runConstant(
-  function*() { return yield Promise.resolve(10); }, // will run for maxTries time
+let result = await retryOnError.runConstant(
+  async () => await Promise.resolve(10), // will run for maxTries time
   { customer_id: 10 }, // additional info that will be logged at every failed retry attempt
   {
     maxTries: 5, // how many times to try running given function
@@ -84,9 +84,9 @@ let retryOnError = require('@emartech/retry-on-error');
 let config = require('../config');
 let logger = require('bunyan-debug')('retry');
 
-module.exports = function*(generatorFunction, context = {}) {
-  return yield retryOnError.runExponential(
-    generatorFunction,
+module.exports = async function(asyncFunction, context = {}) {
+  return await retryOnError.runExponential(
+    asyncFunction,
     context,
     {
       maxTries: config.retry.maxTries,
@@ -113,13 +113,10 @@ module.exports = function*(generatorFunction, context = {}) {
 
 ```javascript
 let retryOnError = require('@emartech/retry-on-error');
-let co = require('co');
 
 describe('SubjectUnderTest', function() {
   beforeEach(function() {
-    this.sandbox.stub(retryOnError, 'runExponential', function(generatorFn) {
-      return co(generatorFn);
-    });
+    this.sandbox.stub(retryOnError, 'runExponential', async (asyncFn) => await asyncFn());
   });
 });
 ```
