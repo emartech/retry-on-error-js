@@ -18,7 +18,7 @@
     "url": "git+https://github.com/emartech/retry-on-error-js"
   },
   "author": "Emarsys Custom Development Team <SUITE-HU-BUD-CD1@emarsys.com>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/emartech/retry-on-error-js/issues"
   },
